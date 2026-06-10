@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JAS Store</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        form {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+
+        .product {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+        }
+
+        .delete-btn {
+            background-color: red;
+            color: white;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🛒 JAS Store</h1>
+
+    <form id="productForm">
+        <h2>Add Product</h2>
+
+        <input type="text" id="name" placeholder="Product Name" required>
+
+        <input type="text" id="description" placeholder="Description" required>
+
+        <input type="number" id="price" placeholder="Price" required>
+
+        <input type="number" id="stock" placeholder="Stock" required>
+
+        <button type="submit">Add Product</button>
+    </form>
+
+    <h2>Products</h2>
+
+    <div id="products"></div>
+
+    <script>
+        const API = "http://127.0.0.1:8000";
+
+        async function loadProducts() {
+            try {
+                const response = await fetch(API + "/products");
+                const data = await response.json();
+
+                const container = document.getElementById("products");
+
+                container.innerHTML = "";
+
+                data.forEach(product => {
+                    container.innerHTML += `
+                        <div class="product">
+                            <h3>${product.name}</h3>
+
+                            <p>${product.description}</p>
+
+                            <p>Price: ₹${product.price}</p>
+
+                            <p>Stock: ${product.stock}</p>
+
+                            <button
+                                class="delete-btn"
+                                onclick="deleteProduct(${product.id})">
+
+                                Delete
+
+                            </button>
+                        </div>
+                    `;
+                });
+
+            } catch (error) {
+                console.error(error);
+                alert("Could not connect to FastAPI backend.");
+            }
+        }
+
+        document.getElementById("productForm")
+            .addEventListener("submit", async function(e) {
+
+                e.preventDefault();
+
+                const product = {
+                    name: document.getElementById("name").value,
+                    description: document.getElementById("description").value,
+                    price: parseFloat(
+                        document.getElementById("price").value
+                    ),
+                    stock: parseInt(
+                        document.getElementById("stock").value
+                    )
+                };
+
+                try {
+                    await fetch(API + "/products", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(product)
+                    });
+
+                    this.reset();
+
+                    loadProducts();
+
+                } catch (error) {
+                    console.error(error);
+                    alert("Failed to add product.");
+                }
+            });
+
+        async function deleteProduct(id) {
+            try {
+                await fetch(API + "/products/" + id, {
+                    method: "DELETE"
+                });
+
+                loadProducts();
+
+            } catch (error) {
+                console.error(error);
+                alert("Failed to delete product.");
+            }
+        }
+
+        loadProducts();
+    </script>
+
+</body>
+</html>
